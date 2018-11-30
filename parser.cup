@@ -1,0 +1,87 @@
+/*
+   Simple +/-/* expression language; 
+   parser evaluates constant expressions on the fly
+*/
+
+package cup.example;
+
+import java_cup.runtime.*;
+import cup.example.Lexer;
+import java.io.IOException;
+import java.io.File;
+import java.io.FileInputStream;
+
+parser code {:
+  protected Lexer lexer;
+:}
+
+/* define how to connect to the scanner! */
+init with {:
+  ComplexSymbolFactory f = new ComplexSymbolFactory();
+  symbolFactory = f;
+  File file = new File("input.txt");
+  FileInputStream fis = null;
+  try {
+    fis = new FileInputStream(file);
+  } catch (IOException e) {
+    e.printStackTrace();
+  } 
+  lexer = new Lexer(f,fis);
+:};
+scan with {: return lexer.next_token(); :};
+
+/* Terminals (tokens returned by the scanner). */
+terminal DBLCONST,INTCONST,ADDOP,MULOP,SUBOP,SEMICOL,COMMA,
+		BOOLN,ELS,IMPL,NEWAR,RTRN,MOD,GRTEQ,LESSEQ,GRT,AND,
+		RTBRC,RTPRN,BOOLCONST,_INT,DOT,LFTBRACKET,OR,BRK,
+		EXTNDS,NUL,STRNG,STRINGCONST,LESS,NEQ,EQL,ASSIGN,
+		LFTPRN,LFTBRACE,RTBRACE,_IF,NW,READLN,_WHLE,DIV,
+		NOT,DBL,CLS,FR,INTRFC,PRNTLN,_VOID,kill,ID;
+
+/* Non terminals */
+non terminal program,decl,variabledecl,variable,type,functiondecl,formals,variablelist,
+			classdecl, fieldlist,classoptions,implementslist,field,interfacedecl,prototypelist,
+			prototype,stmtblock,variabledecllist,stmtlist,stmt,ifstmt,whilestmt,			
+			forstmt,breakstmt,returnstmt,printstmt,exprlist,expr,lvalue,call,
+			actuals,constants;
+
+/* Precedences */
+precedence left ADDOP, SUBOP;
+precedence left MULOP, DIV;
+
+
+/* The grammar rules */
+program ::= decl|decl program;
+decl ::= variabledecl | functiondecl | classdecl | interfacedecl;
+variabledecl::= variable ;
+variable::= type ID ;
+type::= _INT|DBL|BOOLN|STRNG|type LFTBRACKET RTBRC|ID ;
+functiondecl ::= type ID LFTPRN formals RTPRN stmtblock|_VOID ID LFTPRN formals RTPRN stmtblock ;
+formals ::= variablelist|; //|empty;
+classdecl ::= CLS ID LESS GRT LESS IMPL ;
+field ::= variabledecl | functiondecl ;
+interfacedecl ::= INTRFC ID LFTBRACE RTBRACE | INTRFC ID LFTBRACE prototypelist RTBRACE ;
+prototypelist ::= prototype | prototype prototypelist;
+prototype ::= type ID LFTPRN formals RTPRN SEMICOL | _VOID ID LFTPRN formals RTPRN SEMICOL;
+stmtblock ::= LFTBRACE RTBRACE| LFTBRACE variabledecllist RTBRACE| LFTBRACE stmtlist| LFTBRACE variabledecl stmtlist RTBRACE ;
+variabledecllist ::= variabledecl|variabledecl variabledecllist;
+stmtlist ::= stmt | stmt stmtlist;
+stmt ::= SEMICOL|expr SEMICOL | ifstmt|whilestmt|forstmt|breakstmt|returnstmt|printstmt|stmtblock ;
+ifstmt ::= _IF LFTPRN expr RTPRN stmt |_IF LFTPRN expr RTPRN stmt ELS stmt ;
+whilestmt::= _WHLE LFTPRN expr RTPRN stmt ;
+forstmt::=FR LFTPRN SEMICOL expr SEMICOL RTPRN stmt| FR LFTPRN expr SEMICOL expr SEMICOL RTPRN stmt|FR LFTPRN expr SEMICOL expr SEMICOL expr RTPRN stmt ;
+breakstmt ::= BRK SEMICOL ;
+returnstmt ::= RTRN expr SEMICOL | RTRN SEMICOL ;
+printstmt::= PRNTLN LFTPRN exprlist RTPRN SEMICOL;
+
+expr ::= lvalue ASSIGN expr | constants | lvalue | call | LFTPRN expr RTPRN |
+			expr ADDOP expr | expr SUBOP expr | expr  MULOP expr |expr DIV expr |expr  MOD expr| SUBOP expr |
+			expr LESS expr |expr  LESSEQ expr |expr GRT expr |expr GRTEQ expr |
+			expr  EQL expr |expr NEQ expr |expr AND AND expr |expr OR OR expr |NOT expr 
+			READLN LFTPRN RTPRN |NW LFTPRN ID RTPRN |NEWAR LFTPRN INTCONST COMMA type RTPRN ;
+			
+lvalue ::= ID |lvalue LFTBRACE expr RTBRC | lvalue DOT ID ;
+call ::= ID LFTPRN actuals RTPRN|ID DOT ID LFTPRN actuals RTPRN ;
+actuals ::= exprlist | ;//| empty;
+constants ::= INTCONST | DBLCONST| STRINGCONST |BOOLCONST|NUL;
+
