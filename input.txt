@@ -1,1 +1,1 @@
-6+5+55-563;
+void id leftparen rightparen leftbrace if leftparen id equal intconst rightparen println leftparen stringconst rightparen semicol rightbrace

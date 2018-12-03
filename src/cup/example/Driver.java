@@ -1,12 +1,19 @@
 package cup.example;
 
-import java_cup.runtime.*;
 
-class Driver {
+import java.io.FileNotFoundException;
 
-	public static void main(String[] args) throws Exception {
-		Parser parser = new Parser();
-		parser.parse();
-	}
-	
+public class Driver {
+
+    public static void main (String[] args) {
+        System.err.close();
+        try {
+        	Parser p = new Parser(new TScanner("input.txt"));
+            p.parse();
+        } catch (FileNotFoundException e) {
+            System.out.println("Unable to find file.");
+        } catch (Exception e) {
+            System.out.println("\n[reject] from catch");
+        }
+    }
 }
